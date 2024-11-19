@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+httpx  # Для асинхронных HTTP-запросов
+loguru  # Для логирования
+pytest  # Для тестирования
+sqlmodel
+
