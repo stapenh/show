@@ -1,64 +1,33 @@
-version: "3.9"
-
+version: '2.1'
 services:
-  # Ваш старый сервис приложения
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      APP_ENV: "development"
-    volumes:
-      - .:/app
-
-  # Ваша существующая база данных
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_USER: existing_user
-      POSTGRES_PASSWORD: existing_password
-      POSTGRES_DB: existing_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  # Новый сервис NocoDB
   nocodb:
-    image: "nocodb/nocodb:latest"
     depends_on:
       root_db:
         condition: service_healthy
     environment:
-      NC_DB: "pg://postgres:password@root_db:5432/root_db"
-
+      NC_DB: "pg://root_db:5432?u=postgres&p=password&d=root_db"
+      NC_ADMIN_EMAIL: "mama@coco.com"
+      NC_ADMIN_PASSWORD: "pipiloma!"
+    image: "nocodb/nocodb:latest"
     ports:
       - "8080:8080"
     restart: always
     volumes:
-      - nc_data:/usr/app/data
-
-  # Новая база данных для NocoDB
+      - "nc_data:/usr/app/data"
   root_db:
-    image: postgres:14
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
       POSTGRES_DB: root_db
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
-      timeout: 2s
       retries: 10
+      test: "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""
+      timeout: 2s
+    image: postgres
     restart: always
     volumes:
-      - root_db_data:/var/lib/postgresql/data
-
+      - "db_data:/var/lib/postgresql/data"
 volumes:
   db_data: {}
   nc_data: {}
-  root_db_data: {}
